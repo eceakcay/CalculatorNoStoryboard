@@ -15,8 +15,8 @@ class ViewController: UIViewController {
         label.font = UIFont.systemFont(ofSize: 48, weight: .bold)
         label.textAlignment = .right
         label.textColor = .white
-        label.backgroundColor = .black // Sonuç ekranı arka planı
-        label.translatesAutoresizingMaskIntoConstraints = false // Auto Layout için
+        label.backgroundColor = .clear
+        label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
@@ -33,20 +33,22 @@ class ViewController: UIViewController {
     private var previousNumber: String = ""
     private var operation: String = ""
     private var isPerformingOperation: Bool = false
-
+    private var justCalculated: Bool = false
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .darkGray // Uygulama arka planı
+        view.backgroundColor = .darkGray
         setupUI()
     }
     
     private func createButton(title: String, color: UIColor = .gray, action: Selector) -> UIButton {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 32)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 30)
         button.backgroundColor = color
         button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 10
+        button.layer.cornerRadius = 22
+        button.clipsToBounds = true
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
     }
@@ -72,7 +74,7 @@ class ViewController: UIViewController {
             ["7", "8", "9", "*"],
             ["4", "5", "6", "-"],
             ["1", "2", "3", "+"],
-            ["0", ".", "=", ""]
+            ["0", ".", "="]
         ]
         
         for row in rows {
@@ -84,22 +86,33 @@ class ViewController: UIViewController {
             for title in row {
                 let color: UIColor = (title == "C" || title == "=" || title == "±" || title == "%") ? .orange : (["+", "-", "*", "/"].contains(title) ? .lightGray : .gray)
                 let action: Selector = (title == "C") ? #selector(clearButtonTapped) :
-                                       (title == "±") ? #selector(toggleSignButtonTapped) :
-                                       (title == "%") ? #selector(percentButtonTapped) :
-                                       (title == "=") ? #selector(calculateButtonTapped) :
-                                       (["+", "-", "*", "/"].contains(title)) ? #selector(operationButtonTapped(_:)) :
-                                       #selector(numberButtonTapped(_:))
+                (title == "±") ? #selector(toggleSignButtonTapped) :
+                (title == "%") ? #selector(percentButtonTapped) :
+                (title == "=") ? #selector(calculateButtonTapped) :
+                (["+", "-", "*", "/"].contains(title)) ? #selector(operationButtonTapped(_:)) :
+                #selector(numberButtonTapped(_:))
                 
                 let button = createButton(title: title, color: color, action: action)
                 horizontalStack.addArrangedSubview(button)
+                
+                if title == "=" {
+                    button.widthAnchor.constraint(equalTo: horizontalStack.widthAnchor, multiplier: 0.5, constant: -5).isActive = true
+                }
             }
-            
             buttonsStackView.addArrangedSubview(horizontalStack)
         }
     }
     
     @objc private func numberButtonTapped(_ sender: UIButton) {
         guard let number = sender.currentTitle else { return }
+        
+        // "=" sonrası yeni sayı giriliyorsa temizle
+        if justCalculated {
+            currentNumber = (number == ".") ? "0." : number
+            justCalculated = false
+            resultLabel.text = currentNumber
+            return
+        }
         
         if number == "." {
             if !currentNumber.contains(".") {
@@ -113,18 +126,23 @@ class ViewController: UIViewController {
         }
         resultLabel.text = currentNumber
     }
-
+    
     @objc private func operationButtonTapped(_ sender: UIButton) {
         guard let op = sender.currentTitle else { return }
         
-        if !currentNumber.isEmpty {
+        // Art arda işlem desteği
+        if !previousNumber.isEmpty && !isPerformingOperation {
+            calculateButtonTapped()
             previousNumber = currentNumber
-            currentNumber = "0"
-            operation = op
-            isPerformingOperation = true
+        } else {
+            previousNumber = currentNumber
         }
+        
+        operation = op
+        isPerformingOperation = true
+        justCalculated = false
     }
-
+    
     @objc private func calculateButtonTapped() {
         guard !previousNumber.isEmpty, !operation.isEmpty else { return }
         
@@ -140,33 +158,44 @@ class ViewController: UIViewController {
         default: break
         }
         
-        currentNumber = String(result)
+        currentNumber = formatNumber(result)
+        
         resultLabel.text = currentNumber
         previousNumber = ""
         operation = ""
         isPerformingOperation = false
+        justCalculated = true
     }
-
+    
     @objc private func clearButtonTapped() {
         currentNumber = "0"
         previousNumber = ""
         operation = ""
         isPerformingOperation = false
+        justCalculated = false
         resultLabel.text = "0"
     }
-
+    
     @objc private func toggleSignButtonTapped() {
         if let currentValue = Double(currentNumber), currentValue != 0 {
-            currentNumber = String(currentValue * -1)
+            currentNumber = formatNumber(currentValue * -1)
             resultLabel.text = currentNumber
         }
     }
-
+    
     @objc private func percentButtonTapped() {
         if let currentValue = Double(currentNumber), currentValue != 0 {
-            currentNumber = String(currentValue / 100)
+            currentNumber = formatNumber(currentValue / 100)
             resultLabel.text = currentNumber
         }
     }
+    
+    // Sayı formatlama: en fazla 5 basamak, gereksiz sıfır yok
+    private func formatNumber(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 5
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
 }
-
