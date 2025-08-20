@@ -13,7 +13,7 @@ class ViewController: UIViewController {
     private let resultLabel: UILabel = {
         let label = UILabel()
         label.text = "0"
-        label.font = UIFont.systemFont(ofSize: 64, weight: .thin)
+        label.font = UIFont.systemFont(ofSize: 58, weight: .bold) // daha kalın
         label.textAlignment = .right
         label.textColor = .white
         label.backgroundColor = .clear
@@ -48,7 +48,7 @@ class ViewController: UIViewController {
     private func createButton(title: String, color: UIColor = .gray, action: Selector) -> UIButton {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 32, weight: .regular)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 26, weight: .bold) // buton yazısı biraz küçültüldü
         button.backgroundColor = color
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 12
@@ -106,20 +106,23 @@ class ViewController: UIViewController {
             horizontalStack.spacing = 8
             
             if rowIndex == 4 { // Son satır (0, ., =)
-                // "0" butonu - geniş
-                let zeroButton = createButton(title: "0",
-                                            color: UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0),
-                                            action: #selector(numberButtonTapped(_:)))
+                let zeroButton = createButton(
+                    title: "0",
+                    color: UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0),
+                    action: #selector(numberButtonTapped(_:))
+                )
                 
-                // "." butonu
-                let dotButton = createButton(title: ".",
-                                           color: UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0),
-                                           action: #selector(numberButtonTapped(_:)))
+                let dotButton = createButton(
+                    title: ".",
+                    color: UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0),
+                    action: #selector(numberButtonTapped(_:))
+                )
                 
-                // "=" butonu
-                let equalsButton = createButton(title: "=",
-                                              color: .systemOrange,
-                                              action: #selector(calculateButtonTapped))
+                let equalsButton = createButton(
+                    title: "=",
+                    color: .systemOrange,
+                    action: #selector(calculateButtonTapped)
+                )
                 
                 horizontalStack.addArrangedSubview(zeroButton)
                 horizontalStack.addArrangedSubview(dotButton)
@@ -132,7 +135,7 @@ class ViewController: UIViewController {
                 for title in row {
                     var color: UIColor
                     
-                    // Buton renklerini görsele göre ayarla
+                    // Buton renkleri aynı kaldı
                     if title == "C" || title == "±" || title == "%" {
                         color = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0) // Açık gri
                     } else if ["+", "−", "×", "÷", "="].contains(title) {
@@ -141,16 +144,16 @@ class ViewController: UIViewController {
                         color = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0) // Koyu gri
                     }
                     
-                    let action: Selector = (title == "C") ? #selector(clearButtonTapped) :
-                    (title == "±") ? #selector(toggleSignButtonTapped) :
-                    (title == "%") ? #selector(percentButtonTapped) :
-                    (title == "=") ? #selector(calculateButtonTapped) :
-                    (["+", "−", "×", "÷"].contains(title)) ? #selector(operationButtonTapped(_:)) :
-                    #selector(numberButtonTapped(_:))
+                    let action: Selector =
+                        (title == "C") ? #selector(clearButtonTapped) :
+                        (title == "±") ? #selector(toggleSignButtonTapped) :
+                        (title == "%") ? #selector(percentButtonTapped) :
+                        (title == "=") ? #selector(calculateButtonTapped) :
+                        (["+", "−", "×", "÷"].contains(title)) ? #selector(operationButtonTapped(_:)) :
+                        #selector(numberButtonTapped(_:))
                     
                     let button = createButton(title: title, color: color, action: action)
                     
-                    // Operatör butonları için beyaz yazı
                     if ["+", "−", "×", "÷", "="].contains(title) {
                         button.setTitleColor(.white, for: .normal)
                     } else if title == "C" || title == "±" || title == "%" {
@@ -201,7 +204,7 @@ class ViewController: UIViewController {
         
         justCalculated = false
         
-        // Art arda işlem desteği: önceki işlem varsa önce onu hesapla
+        // Art arda işlem: önceki işlem varsa önce onu hesapla
         if !previousNumber.isEmpty && !operation.isEmpty && !isPerformingOperation {
             calculateButtonTapped()
         }
